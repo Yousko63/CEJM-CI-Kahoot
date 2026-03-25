@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEJM Kahoot – Hôte</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ══════════════════════════════════════════
+  // 🔧 REMPLACE PAR TA CONFIG FIREBASE ICI
+  const firebaseConfig = {
+    apiKey: "AIzaSyDABerqe3MH_GIfhXMs5h4oiG_kPpIJDK8",
+    authDomain: "cejm-theme-1.firebaseapp.com",
+    databaseURL: "https://cejm-theme-1-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "cejm-theme-1",
+    storageBucket: "cejm-theme-1.firebasestorage.app",
+    messagingSenderId: "384316446622",
+    appId: "1:384316446622:web:30c3b23a2120991e8c688f",
+    measurementId: "G-CT5DGYDN8M"
+  };
+  // ══════════════════════════════════════════
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const QUESTIONS = [
+    { cat: "📊 Économie", q: "Quelle est la définition d'une externalité négative ?", answers: ["Un profit supplémentaire non prévu", "Un impact négatif d'une activité économique sur un tiers sans compensation", "Une taxe imposée par l'État aux entreprises", "Une barrière à l'entrée sur un marché"], correct: 1 },
+    { cat: "📊 Économie", q: "Combien de conditions doit respecter la concurrence pure et parfaite (CPP) ?", answers: ["3 conditions", "4 conditions", "5 conditions", "6 conditions"], correct: 2 },
+    { cat: "📊 Économie", q: "Qu'est-ce que l'asymétrie d'information ?", answers: ["Une information partagée entre tous les acteurs", "Une situation où une partie détient plus d'information que l'autre dans une transaction", "Un système de communication interne à l'entreprise", "Une stratégie de communication marketing"], correct: 1 },
+    { cat: "📊 Économie", q: "Dans quel type de marché une seule entreprise produit-elle l'ensemble de l'offre ?", answers: ["Oligopole", "Concurrence monopolistique", "Duopole", "Monopole"], correct: 3 },
+    { cat: "📊 Économie", q: "Quel outil représente les échanges entre agents économiques ?", answers: ["Le bilan comptable", "Le circuit économique", "La chaîne de valeur", "L'organigramme"], correct: 1 },
+    { cat: "📊 Économie", q: "Qu'est-ce qu'une barrière à l'entrée sur un marché ?", answers: ["Une taxe douanière sur les importations", "Un obstacle qui limite ou empêche de nouveaux concurrents d'entrer sur un marché", "Un contrat d'exclusivité signé avec les fournisseurs", "Une norme de qualité imposée aux produits"], correct: 1 },
+    { cat: "📊 Économie", q: "Quelle est la principale fonction des marchés financiers dans l'économie ?", answers: ["Fixer les prix des matières premières", "Permettre aux entreprises et à l'État de se financer en émettant des titres", "Réguler le taux de chômage", "Contrôler les fusions-acquisitions"], correct: 1 },
+    { cat: "📊 Économie", q: "Qu'est-ce qu'un oligopole ?", answers: ["Un marché avec un seul vendeur et de nombreux acheteurs", "Un marché avec deux vendeurs seulement", "Un marché dominé par un petit nombre de grandes entreprises", "Un marché où tous les produits sont identiques"], correct: 2 },
+    { cat: "📊 Économie", q: "Quelle est la différence entre coopération horizontale et coopération verticale ?", answers: ["La coopération horizontale concerne des concurrents ; la verticale concerne des entreprises complémentaires de la chaîne de valeur", "La coopération horizontale est illégale ; la verticale est autorisée", "La coopération horizontale implique l'État ; la verticale n'implique que des privés", "Il n'y a aucune différence"], correct: 0 },
+    { cat: "⚖️ Droit", q: "Quelles sont les conditions de validité d'un contrat en droit français ?", answers: ["Consentement, capacité, contenu licite et certain", "Signature, notarisation, enregistrement fiscal", "Accord verbal, prix fixé, livraison garantie", "Offre écrite, acceptation orale, témoin présent"], correct: 0 },
+    { cat: "⚖️ Droit", q: "Qu'est-ce que la clause de réserve de propriété dans un contrat ?", answers: ["Le vendeur reste propriétaire du bien jusqu'au paiement total du prix", "L'acheteur peut résilier le contrat sans motif dans un délai de 30 jours", "Le prix peut être modifié unilatéralement par le vendeur", "La livraison peut être différée indéfiniment"], correct: 0 },
+    { cat: "⚖️ Droit", q: "Quelle est la différence entre nullité absolue et nullité relative d'un contrat ?", answers: ["La nullité absolue peut être invoquée par toute personne ; la nullité relative seulement par la partie protégée", "La nullité absolue annule partiellement le contrat ; la nullité relative annule totalement", "La nullité absolue est prononcée par un arbitre ; la nullité relative par un juge", "Il n'y a aucune différence pratique"], correct: 0 },
+    { cat: "⚖️ Droit", q: "Qu'est-ce que la liberté contractuelle ?", answers: ["La liberté pour l'État de modifier les contrats privés", "La liberté pour les parties de contracter ou non, de choisir leur cocontractant et de fixer le contenu", "L'obligation de conclure un contrat écrit", "Le droit de résilier un contrat à tout moment"], correct: 1 },
+    { cat: "⚖️ Droit", q: "Qu'est-ce que la force obligatoire du contrat ?", answers: ["Le contrat engage uniquement l'une des parties", "Le contrat signé s'impose aux parties comme la loi : elles doivent l'exécuter", "Le contrat peut être modifié unilatéralement si les circonstances changent", "Le contrat n'engage que si un juge le valide"], correct: 1 },
+    { cat: "⚖️ Droit", q: "Qu'est-ce que les pourparlers dans la formation d'un contrat ?", answers: ["La phase d'exécution du contrat", "Des échanges informels d'intentions préalables à la négociation, sans engagement contractuel", "La signature finale du contrat", "Une clause de renégociation du prix"], correct: 1 },
+    { cat: "⚖️ Droit", q: "Qu'est-ce que la clause pénale dans un contrat ?", answers: ["Une clause qui prévoit la résiliation automatique en cas de défaillance", "Une clause qui prévoit une somme forfaitaire due par la partie défaillante en cas d'inexécution", "Une clause qui limite la responsabilité du débiteur", "Une clause qui indexe le prix sur un indice économique"], correct: 1 },
+    { cat: "⚖️ Droit", q: "Quelles sont les vices du consentement pouvant entraîner la nullité d'un contrat ?", answers: ["L'erreur, le dol (tromperie) et la violence", "L'absence de signature et le défaut d'enregistrement", "Le manque de témoins et l'absence de date", "La faible valeur du bien et l'insolvabilité d'une partie"], correct: 0 },
+    { cat: "⚖️ Droit", q: "Qu'est-ce qu'une externalité positive ?", answers: ["Un bénéfice généré par une activité économique pour un tiers sans contrepartie", "Un avantage fiscal accordé par l'État", "Une clause contractuelle favorable à l'une des parties", "Un dividende versé aux actionnaires"], correct: 0 },
+    { cat: "⚖️ Droit", q: "Quelle est la durée de la prescription de droit commun en matière contractuelle ?", answers: ["1 an", "3 ans", "5 ans", "10 ans"], correct: 2 },
+    { cat: "🎯 Management", q: "Quelles sont les 3 finalités d'une entreprise ?", answers: ["Financière, commerciale et technique", "Économique, sociale et sociétale", "Productive, distributive et administrative", "Stratégique, opérationnelle et tactique"], correct: 1 },
+    { cat: "🎯 Management", q: "Selon Freeman (1984), qu'est-ce qu'une partie prenante ?", answers: ["Un actionnaire minoritaire de l'entreprise", "Tout individu ou groupe pouvant affecter ou être affecté par la réalisation des objectifs de l'organisation", "Un salarié ayant plus de 5 ans d'ancienneté", "Un client fidèle de l'entreprise"], correct: 1 },
+    { cat: "🎯 Management", q: "Quelle est la différence entre efficacité et efficience ?", answers: ["L'efficacité mesure le profit ; l'efficience mesure le CA", "L'efficacité est l'atteinte des objectifs ; l'efficience est l'atteinte des objectifs par rapport aux moyens utilisés", "L'efficacité concerne les managers ; l'efficience concerne les opérateurs", "Il n'y a pas de différence"], correct: 1 },
+    { cat: "🎯 Management", q: "Quels sont les deux profils de dirigeant en CEJM ?", answers: ["Autoritaire et démocratique", "Entrepreneurial et managérial", "Stratégique et opérationnel", "Leader et gestionnaire"], correct: 1 },
+    { cat: "🎯 Management", q: "Quel outil de Kaplan et Norton (1992) analyse l'entreprise sous 4 axes ?", answers: ["Le diagramme de Gantt", "La matrice BCG", "Le tableau de bord prospectif (TBP)", "L'analyse PESTEL"], correct: 2 },
+    { cat: "🎯 Management", q: "Qu'analyse le modèle PESTEL ?", answers: ["Les forces concurrentielles d'un secteur", "L'environnement macro-économique d'une entreprise selon 6 dimensions", "Les ressources internes de l'entreprise", "La performance financière de l'entreprise"], correct: 1 }
+  ];
+
+  // ── STATE ──
+  let gamePin = null;
+  let currentQ = -1;
+  let phase = 'lobby'; // lobby | question | results | podium
+  let timerInterval = null;
+  let timeLeft = 20;
+  let playersRef = null;
+
+  // ── HELPERS ──
+  function genPin() { return Math.floor(100000 + Math.random() * 900000).toString(); }
+  function $(id) { return document.getElementById(id); }
+
+  // ── CREATE GAME ──
+  window.createGame = async function() {
+    gamePin = genPin();
+    await set(ref(db, `games/${gamePin}`), {
+      pin: gamePin,
+      phase: 'lobby',
+      currentQ: -1,
+      totalQ: QUESTIONS.length,
+      questionData: null,
+      timeLeft: 20
+    });
+    await set(ref(db, `games/${gamePin}/players`), {});
+
+    $('pin-display').textContent = gamePin;
+    $('screen-setup').style.display = 'none';
+    $('screen-lobby').style.display = 'flex';
+
+    // Listen players
+    playersRef = ref(db, `games/${gamePin}/players`);
+    onValue(playersRef, snap => {
+      const players = snap.val() || {};
+      const list = Object.values(players);
+      $('player-count').textContent = list.length;
+      $('player-list').innerHTML = list.map(p =>
+        `<div class="player-chip">${p.name}</div>`
+      ).join('');
+    });
+  };
+
+  // ── START GAME ──
+  window.startGame = async function() {
+    $('screen-lobby').style.display = 'none';
+    $('screen-game').style.display = 'flex';
+    await nextQuestion();
+  };
+
+  async function nextQuestion() {
+    currentQ++;
+    if (currentQ >= QUESTIONS.length) { endGame(); return; }
+
+    const q = QUESTIONS[currentQ];
+    timeLeft = 20;
+
+    await update(ref(db, `games/${gamePin}`), {
+      phase: 'question',
+      currentQ,
+      timeLeft: 20,
+      questionData: {
+        index: currentQ,
+        total: QUESTIONS.length,
+        cat: q.cat,
+        text: q.q,
+        answers: q.answers,
+        correct: -1 // hidden until reveal
+      }
+    });
+    // Clear previous answers
+    await set(ref(db, `games/${gamePin}/answers`), {});
+
+    renderQuestion(q);
+    startTimer();
+  }
+
+  function renderQuestion(q) {
+    $('host-q-num').textContent = `Question ${currentQ+1} / ${QUESTIONS.length}`;
+    $('host-cat').textContent = q.cat;
+    $('host-q-text').textContent = q.q;
+    $('host-prog').style.width = `${((currentQ) / QUESTIONS.length) * 100}%`;
+
+    const colors = ['#3498db','#e94560','#f5a623','#2ecc71'];
+    const icons = ['▲','●','■','✦'];
+    const grid = $('host-answers');
+    grid.innerHTML = q.answers.map((a, i) =>
+      `<div class="host-ans" style="background:${colors[i]}22;border-color:${colors[i]}">
+        <span class="ans-shape" style="background:${colors[i]}">${icons[i]}</span>
+        <span>${a}</span>
+      </div>`
+    ).join('');
+
+    $('host-timer').textContent = 20;
+    $('host-timer').style.background = 'conic-gradient(#f5a623 100%, rgba(255,255,255,0.1) 0)';
+    $('reveal-btn').style.display = 'none';
+    $('next-q-btn').style.display = 'none';
+    $('answer-stats').innerHTML = '';
+  }
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(async () => {
+      timeLeft--;
+      $('host-timer').textContent = timeLeft;
+      const pct = (timeLeft / 20) * 100;
+      const color = timeLeft <= 5 ? '#e94560' : '#f5a623';
+      $('host-timer').style.background = `conic-gradient(${color} ${pct}%, rgba(255,255,255,0.1) 0)`;
+      await update(ref(db, `games/${gamePin}`), { timeLeft });
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        await revealAnswers();
+      }
+    }, 1000);
+  }
+
+  window.revealNow = async function() {
+    clearInterval(timerInterval);
+    await revealAnswers();
+  };
+
+  async function revealAnswers() {
+    const q = QUESTIONS[currentQ];
+    await update(ref(db, `games/${gamePin}`), {
+      phase: 'reveal',
+      'questionData/correct': q.correct
+    });
+
+    // Get answers
+    const snap = await get(ref(db, `games/${gamePin}/answers`));
+    const answers = snap.val() || {};
+    const counts = [0,0,0,0];
+    Object.values(answers).forEach(a => { if (a.answer >= 0 && a.answer <= 3) counts[a.answer]++; });
+
+    const colors = ['#3498db','#e94560','#f5a623','#2ecc71'];
+    const icons = ['▲','●','■','✦'];
+    $('answer-stats').innerHTML = counts.map((c, i) =>
+      `<div class="stat-bar-wrap">
+        <div class="stat-bar" style="background:${colors[i]};height:${Math.max(20, c * 30)}px">
+          <span>${c}</span>
+        </div>
+        <div class="stat-icon">${icons[i]}</div>
+        ${i === q.correct ? '<div class="correct-mark">✅</div>' : ''}
+      </div>`
+    ).join('');
+
+    // Update scores
+    const playersSnap = await get(ref(db, `games/${gamePin}/players`));
+    const players = playersSnap.val() || {};
+    for (const [pid, ans] of Object.entries(answers)) {
+      if (ans.answer === q.correct && players[pid]) {
+        const bonus = Math.max(100, Math.round((ans.timeLeft / 20) * 200));
+        const newScore = (players[pid].score || 0) + bonus;
+        await update(ref(db, `games/${gamePin}/players/${pid}`), { score: newScore });
+      }
+    }
+
+    // Show leaderboard
+    const updatedSnap = await get(ref(db, `games/${gamePin}/players`));
+    const updated = updatedSnap.val() || {};
+    renderLeaderboard(Object.values(updated));
+
+    $('reveal-btn').style.display = 'none';
+    $('next-q-btn').style.display = 'block';
+    $('next-q-btn').textContent = currentQ + 1 < QUESTIONS.length ? 'Question suivante →' : '🏆 Voir le Podium';
+  }
+
+  function renderLeaderboard(players) {
+    const sorted = players.sort((a,b) => (b.score||0)-(a.score||0)).slice(0, 8);
+    $('leaderboard').innerHTML = sorted.map((p, i) =>
+      `<div class="lb-row ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">
+        <span class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`}</span>
+        <span class="lb-name">${p.name}</span>
+        <span class="lb-score">${p.score||0} pts</span>
+      </div>`
+    ).join('');
+  }
+
+  window.goNextQ = async function() { await nextQuestion(); };
+
+  async function endGame() {
+    clearInterval(timerInterval);
+    await update(ref(db, `games/${gamePin}`), { phase: 'podium' });
+    $('screen-game').style.display = 'none';
+    $('screen-podium').style.display = 'flex';
+
+    const snap = await get(ref(db, `games/${gamePin}/players`));
+    const players = Object.values(snap.val() || {}).sort((a,b)=>(b.score||0)-(a.score||0));
+    const medals = ['🥇','🥈','🥉'];
+    $('podium-list').innerHTML = players.slice(0,10).map((p,i) =>
+      `<div class="podium-row">
+        <span class="pod-medal">${medals[i]||`#${i+1}`}</span>
+        <span class="pod-name">${p.name}</span>
+        <span class="pod-score">${p.score||0} pts</span>
+      </div>`
+    ).join('');
+  }
+
+  window.resetGame = async function() {
+    await remove(ref(db, `games/${gamePin}`));
+    location.reload();
+  };
+</script>
+
+<style>
+:root {
+  --bg: #0d0d1a;
+  --card: #13132a;
+  --gold: #f5a623;
+  --red: #e94560;
+  --green: #2ecc71;
+  --blue: #3498db;
+  --text: #eaeaea;
+  --muted: #6677aa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background-image: radial-gradient(ellipse at 10% 90%, rgba(245,166,35,0.08) 0%, transparent 50%),
+                    radial-gradient(ellipse at 90% 10%, rgba(233,69,96,0.1) 0%, transparent 50%);
+}
+.screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; padding: 24px; gap: 20px; }
+
+/* SETUP */
+#screen-setup { display: flex; }
+.setup-card { background: var(--card); border-radius: 20px; padding: 50px 40px; text-align: center; border: 1px solid rgba(245,166,35,0.2); box-shadow: 0 30px 80px rgba(0,0,0,0.6); max-width: 480px; width: 100%; }
+.logo { font-family: 'Montserrat', sans-serif; font-size: 3rem; font-weight: 900; color: var(--gold); margin-bottom: 6px; }
+.logo span { color: var(--red); }
+.tagline { color: var(--muted); font-size: 0.9rem; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
+.setup-card h2 { font-family: 'Montserrat', sans-serif; font-size: 1.4rem; margin-bottom: 10px; }
+.setup-card p { color: var(--muted); margin-bottom: 30px; line-height: 1.6; font-size: 0.95rem; }
+.btn { background: linear-gradient(135deg, var(--red), #c0392b); color: white; border: none; padding: 16px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: 800; font-family: 'Montserrat', sans-serif; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.5); }
+.btn-green { background: linear-gradient(135deg, var(--green), #27ae60); box-shadow: 0 6px 20px rgba(46,204,113,0.4); }
+.btn-green:hover { box-shadow: 0 10px 30px rgba(46,204,113,0.5); }
+.btn-outline { background: transparent; border: 2px solid var(--muted); color: var(--muted); box-shadow: none; }
+.btn-outline:hover { border-color: var(--red); color: var(--red); box-shadow: none; transform: none; }
+
+/* LOBBY */
+.lobby-top { display: flex; gap: 20px; width: 100%; }
+.pin-box { background: var(--card); border-radius: 20px; padding: 30px; text-align: center; flex: 1; border: 2px solid rgba(245,166,35,0.3); }
+.pin-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700; }
+.pin-number { font-family: 'Montserrat', sans-serif; font-size: 3.5rem; font-weight: 900; color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 30px rgba(245,166,35,0.5); }
+.pin-hint { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
+.player-box { background: var(--card); border-radius: 20px; padding: 24px; flex: 1; border: 1px solid rgba(255,255,255,0.06); }
+.player-box h3 { font-family: 'Montserrat', sans-serif; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+.player-count-big { font-family: 'Montserrat', sans-serif; font-size: 2.5rem; font-weight: 900; color: var(--green); }
+.player-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; max-height: 120px; overflow-y: auto; }
+.player-chip { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; color: #85e0a8; font-weight: 700; }
+
+/* GAME */
+.game-top { display: flex; align-items: center; gap: 16px; width: 100%; }
+.host-timer {
+  width: 70px; height: 70px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.4rem;
+  position: relative;
+}
+.host-timer::before { content: ''; position: absolute; inset: 5px; background: var(--bg); border-radius: 50%; z-index: 0; }
+#host-timer { position: relative; z-index: 1; }
+.cat-badge { background: rgba(245,166,35,0.15); border: 1px solid rgba(245,166,35,0.3); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; color: var(--gold); font-weight: 700; }
+.q-progress { flex: 1; }
+.q-progress-bar { background: rgba(255,255,255,0.08); border-radius: 6px; height: 6px; overflow: hidden; margin-top: 4px; }
+.q-progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--red)); border-radius: 6px; transition: width 0.4s; }
+.host-question { background: var(--card); border-radius: 16px; padding: 24px 28px; width: 100%; font-size: 1.3rem; font-weight: 700; line-height: 1.5; border: 1px solid rgba(255,255,255,0.07); }
+.host-answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.host-ans { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 12px; border: 2px solid; font-weight: 700; font-size: 0.92rem; }
+.ans-shape { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; }
+.game-bottom { display: flex; gap: 16px; width: 100%; }
+.leaderboard-box { background: var(--card); border-radius: 16px; padding: 20px; flex: 1; border: 1px solid rgba(255,255,255,0.06); }
+.leaderboard-box h3 { font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; margin-bottom: 6px; background: rgba(255,255,255,0.04); }
+.lb-row.gold { background: rgba(245,166,35,0.15); }
+.lb-row.silver { background: rgba(192,192,192,0.1); }
+.lb-row.bronze { background: rgba(205,127,50,0.1); }
+.lb-rank { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1rem; width: 30px; }
+.lb-name { flex: 1; font-weight: 700; }
+.lb-score { font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--gold); }
+.stats-box { background: var(--card); border-radius: 16px; padding: 20px; flex: 1; border: 1px solid rgba(255,255,255,0.06); }
+.stats-box h3 { font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+#answer-stats { display: flex; gap: 10px; align-items: flex-end; height: 120px; }
+.stat-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.stat-bar { border-radius: 8px 8px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; color: white; font-weight: 900; font-size: 0.9rem; width: 100%; min-height: 20px; transition: height 0.5s ease; }
+.stat-icon { font-size: 1.1rem; }
+.correct-mark { font-size: 0.9rem; }
+.btn-row { display: flex; gap: 12px; justify-content: center; }
+
+/* PODIUM */
+#screen-podium .podium-card { background: var(--card); border-radius: 20px; padding: 40px; text-align: center; width: 100%; max-width: 560px; border: 1px solid rgba(245,166,35,0.3); }
+#screen-podium h2 { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 900; color: var(--gold); margin-bottom: 24px; }
+.podium-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.04); font-size: 1.05rem; }
+.pod-medal { font-size: 1.4rem; width: 36px; }
+.pod-name { flex: 1; font-weight: 700; text-align: left; }
+.pod-score { font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="screen" id="screen-setup">
+  <div class="setup-card">
+    <div class="logo">K<span>!</span>CEJM</div>
+    <div class="tagline">Tableau de bord Hôte · Thème 1</div>
+    <h2>🎮 Lancer une partie</h2>
+    <p>Crée la salle de jeu. Un code PIN sera généré automatiquement. Tes joueurs le saisissent sur leur téléphone pour rejoindre.</p>
+    <button class="btn" onclick="createGame()">🚀 Créer la salle</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="screen-lobby">
+  <div class="lobby-top">
+    <div class="pin-box">
+      <div class="pin-label">Code PIN de la salle</div>
+      <div class="pin-number" id="pin-display">------</div>
+      <div class="pin-hint">Les joueurs saisissent ce code sur la page joueur</div>
+    </div>
+    <div class="player-box">
+      <h3>Joueurs connectés</h3>
+      <div class="player-count-big" id="player-count">0</div>
+      <div class="player-list" id="player-list"></div>
+    </div>
+  </div>
+  <button class="btn btn-green" onclick="startGame()">▶ Lancer la partie</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="screen-game">
+  <div class="game-top">
+    <div class="host-timer" id="host-timer-wrap">
+      <span id="host-timer">20</span>
+    </div>
+    <div class="cat-badge" id="host-cat">Économie</div>
+    <div class="q-progress">
+      <div id="host-q-num" style="font-size:0.82rem;color:var(--muted);font-weight:700"></div>
+      <div class="q-progress-bar"><div class="q-progress-fill" id="host-prog" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="host-question" id="host-q-text">…</div>
+  <div class="host-answers-grid" id="host-answers"></div>
+  <div class="game-bottom">
+    <div class="leaderboard-box">
+      <h3>🏆 Classement</h3>
+      <div id="leaderboard"></div>
+    </div>
+    <div class="stats-box">
+      <h3>📊 Réponses</h3>
+      <div id="answer-stats"></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" id="reveal-btn" onclick="revealNow()" style="display:none">⚡ Révéler maintenant</button>
+    <button class="btn btn-green" id="next-q-btn" onclick="goNextQ()" style="display:none">Question suivante →</button>
+    <button class="btn btn-outline" onclick="resetGame()">✕ Terminer</button>
+  </div>
+</div>
+
+<!-- PODIUM -->
+<div class="screen" id="screen-podium">
+  <div class="podium-card">
+    <h2>🏆 Podium Final</h2>
+    <div id="podium-list"></div>
+    <br>
+    <button class="btn" onclick="resetGame()">🔄 Nouvelle partie</button>
+  </div>
+</div>
+
+</body>
+</html>
