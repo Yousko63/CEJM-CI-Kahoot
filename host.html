@@ -50,6 +50,35 @@
     { cat: "Management", q: "Qu'analyse le modele PESTEL ?", answers: ["Les forces concurrentielles d'un secteur", "L'environnement macro-economique d'une entreprise selon 6 dimensions", "Les ressources internes de l'entreprise", "La performance financiere de l'entreprise"], correct: 1 }
   ];
 
+
+  const EXPLANATIONS = [
+    "Une externalite negative est un effet nefaste subi par un tiers sans contrepartie. Ex : une usine qui pollue un fleuve cause une externalite negative pour les riverains.",
+    "La CPP repose sur 5 conditions : atomicite, homogeneite des produits, libre entree/sortie, transparence de l'information et mobilite des facteurs de production.",
+    "L'asymetrie d'information existe quand l'offreur et le demandeur n'ont pas le meme niveau d'information. Ex : le vendeur d'une voiture d'occasion en sait plus que l'acheteur.",
+    "Le monopole = un seul producteur face a une multitude d'acheteurs. Ex : SNCF pendant longtemps sur le reseau ferroviaire francais.",
+    "Le circuit economique est une representation schematique des flux (reels et monetaires) entre les agents economiques : menages, entreprises, Etat, banques.",
+    "Les barrieres a l'entree peuvent etre economiques (couts eleves), technologiques (brevets), reglementaires (licences) ou strategiques. Elles protegent les entreprises en place.",
+    "Les marches financiers permettent aux entreprises et a l'Etat de se financer a long terme en faisant appel a l'epargne des investisseurs via actions et obligations.",
+    "L'oligopole = marche domine par un petit nombre de vendeurs. Ex : telephonie mobile en France avec Orange, SFR, Bouygues et Free.",
+    "La cooperation horizontale unit des concurrents. La cooperation verticale unit des entreprises a differents stades de la chaine (ex : fournisseur + distributeur).",
+    "Depuis la reforme de 2016, un contrat valide doit reunir : consentement non vicie, capacite des parties, contenu licite et certain.",
+    "La clause de reserve de propriete protege le vendeur : il reste proprietaire du bien livre jusqu'au complet paiement. En cas de defaillance, il peut reprendre son bien.",
+    "Nullite absolue (protege l'ordre public) : tout interesse peut l'invoquer. Nullite relative (protege une partie lesee) : seule la partie lesee peut l'invoquer.",
+    "La liberte contractuelle (art. 1102 C. civil) : liberte de contracter ou non, de choisir son cocontractant, de determiner le contenu du contrat.",
+    "En vertu de la force obligatoire (art. 1103 C. civil), les contrats legalement formes tiennent lieu de loi a ceux qui les ont faits.",
+    "Les pourparlers sont des discussions preliminaires informelles qui n'engagent pas contractuellement. Ils precedent les precontrats puis le contrat definitif.",
+    "La clause penale fixe a l'avance le montant des dommages et interets en cas d'inexecution. Le juge peut la moderer si elle est manifestement excessive.",
+    "Les vices du consentement : erreur (meprise sur un element essentiel), dol (manoeuvres frauduleuses) et violence (contrainte illegitime). Ils permettent la nullite relative.",
+    "L'externalite positive est un effet benefique non paye. Ex : une entreprise qui forme ses salaries ameliore leur employabilite generale au-dela de l'entreprise.",
+    "La prescription de droit commun en matiere contractuelle est de 5 ans en France (art. 2224 du Code civil).",
+    "Les 3 finalites sont interdependantes : economique (profit, perennite), sociale (bien-etre des salaries) et societale (respect de l'environnement, RSE).",
+    "Freeman (1984) : une partie prenante est tout individu ou groupe qui peut affecter ou etre affecte par la realisation des objectifs de l'organisation.",
+    "Efficacite = atteindre l'objectif. Efficience = atteindre l'objectif avec un minimum de moyens. On peut etre efficace sans etre efficient.",
+    "Profil entrepreneurial : tourne vers l'avenir et le long terme. Profil managerial : centre sur l'allocation des ressources et le court/moyen terme.",
+    "Le Tableau de Bord Prospectif (TBP) de Kaplan & Norton (1992) analyse l'entreprise sous 4 axes : financier, clients, processus internes, apprentissage/innovation.",
+    "PESTEL = Politique, Economique, Social, Technologique, Ecologique, Legal. Outil de diagnostic externe identifiant les opportunites et menaces de l'environnement macro."
+  ];
+
   const COLORS = ['#3b82f6','#ef4444','#f59e0b','#22c55e'];
   const LABELS = ['A','B','C','D'];
 
@@ -158,6 +187,7 @@
     $('next-q-btn').style.display = 'none';
     $('answer-stats').innerHTML = '';
     $('correct-answer-box').style.display = 'none';
+    $('host-explanation').style.display = 'none';
 
     $('host-q-text').classList.remove('q-pop');
     void $('host-q-text').offsetWidth;
@@ -228,6 +258,12 @@
     $('reveal-btn').style.display = 'none';
     $('next-q-btn').style.display = 'inline-flex';
     $('next-q-btn').textContent = currentQ + 1 < QUESTIONS.length ? 'Question suivante' : 'Voir le podium';
+
+    if (currentQ >= 0 && currentQ < EXPLANATIONS.length) {
+      const expl = $('host-explanation');
+      expl.textContent = EXPLANATIONS[currentQ];
+      expl.style.display = 'block';
+    }
   }
 
   function renderLeaderboard(players) {
@@ -413,6 +449,15 @@ body {
 .stat-correct .stat-bar-fill { box-shadow: 0 0 14px rgba(34,197,94,0.5); }
 .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
+.host-explanation {
+  display: none; width: 100%;
+  background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.22);
+  border-radius: 12px; padding: 13px 18px;
+  font-size: 0.88rem; color: #fcd680; line-height: 1.6;
+  animation: fadeUp 0.4s ease;
+}
+.host-explanation::before { content: 'Explication — '; font-weight: 800; color: #f59e0b; }
+
 /* PODIUM */
 #screen-podium { max-width: 680px; }
 .podium-header { text-align: center; width: 100%; }
@@ -490,6 +535,7 @@ body {
     <div class="correct-dot"></div>
     <span id="correct-answer-text"></span>
   </div>
+  <div class="host-explanation" id="host-explanation"></div>
   <div class="game-bottom">
     <div class="panel">
       <div class="panel-title">Classement en direct</div>
