@@ -3,696 +3,343 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CEJM Quiz – Joueur</title>
+<title>CEJM Kahoot – Joueur</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDABerqe3MH_GIfhXMs5h4oiG_kPpIJDK8",
-    authDomain: "cejm-theme-1.firebaseapp.com",
-    databaseURL: "https://cejm-theme-1-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "cejm-theme-1",
-    storageBucket: "cejm-theme-1.firebasestorage.app",
-    messagingSenderId: "384316446622",
-    appId: "1:384316446622:web:30c3b23a2120991e8c688f"
-  };
+  // ══════════════════════════════════════════
+  // 🔧 REMPLACE PAR TA CONFIG FIREBASE ICI (identique à host.html)
+const firebaseConfig = {
+  apiKey: "AIzaSyDABerqe3MH_GIfhXMs5h4oiG_kPpIJDK8",
+  authDomain: "cejm-theme-1.firebaseapp.com",
+  databaseURL: "https://cejm-theme-1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "cejm-theme-1",
+  storageBucket: "cejm-theme-1.firebasestorage.app",
+  messagingSenderId: "384316446622",
+  appId: "1:384316446622:web:30c3b23a2120991e8c688f",
+  measurementId: "G-CT5DGYDN8M"
+};
+  // ══════════════════════════════════════════
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  const COLORS = ['#3b82f6','#ef4444','#f59e0b','#22c55e'];
-  const LABELS = ['A','B','C','D'];
-  const EMOJIS = ['😀','😎','🤩','🦁','🐯','🦊','🐼','🐸','🦄','🐲','🚀','⚡','🔥','🎯','🏆','💎','🎸','🎮','🍕','🌈'];
-
-  // Explications pour chaque question (index 0-24)
-  const EXPLANATIONS = [
-    "Une externalite negative est un effet nefaste subi par un tiers sans contrepartie. Ex : une usine qui pollue un fleuve cause une externalite negative pour les riverains.",
-    "La CPP repose sur 5 conditions : atomicite (multitude d'acteurs), homogeneite des produits, libre entree/sortie, transparence de l'information et mobilite des facteurs.",
-    "L'asymetrie d'information existe quand l'offreur et le demandeur n'ont pas le meme niveau d'information. Ex : le vendeur d'une voiture d'occasion en sait plus que l'acheteur.",
-    "Le monopole = un seul producteur face a une multitude d'acheteurs. Ex : SNCF pendant longtemps sur le reseau ferroviaire francais.",
-    "Le circuit economique est une representation schematique des flux (reels et monetaires) entre les agents economiques : menages, entreprises, Etat, banques.",
-    "Les barrieres a l'entree peuvent etre economiques (couts eleves), technologiques (brevets), reglementaires (licences) ou strategiques. Elles protegent les entreprises en place.",
-    "Les marches financiers (actions, obligations) permettent aux entreprises et a l'Etat de se financer a long terme en faisant appel a l'epargne des investisseurs.",
-    "L'oligopole = marche domine par un petit nombre de vendeurs. Ex : telephonie mobile en France avec Orange, SFR, Bouygues et Free.",
-    "La cooperation horizontale unit des concurrents (ex : alliance entre constructeurs). La cooperation verticale unit des entreprises a differents stades de la chaine (ex : fournisseur + distributeur).",
-    "Depuis la reforme de 2016, un contrat valide doit reunir : consentement non vicie, capacite des parties, contenu licite et certain.",
-    "La clause de reserve de propriete protege le vendeur : il reste proprietaire du bien livre jusqu'au complet paiement. En cas de defaillance, il peut reprendre son bien.",
-    "Nullite absolue (protege l'ordre public) : tout interesse peut l'invoquer. Nullite relative (protege une partie lessee ex : vice du consentement) : seule la partie lesee peut l'invoquer.",
-    "La liberte contractuelle (art. 1102 C. civil) comprend 3 volets : liberte de contracter ou non, de choisir son cocontractant, de determiner le contenu du contrat.",
-    "En vertu de la force obligatoire (art. 1103 C. civil), les contrats legalement formes tiennent lieu de loi a ceux qui les ont faits. Les parties sont liees par leurs engagements.",
-    "Les pourparlers sont des discussions preliminaires informelles qui n'engagent pas contractuellement. Ils precedent les precontrats puis le contrat definitif.",
-    "La clause penale fixe a l'avance le montant des dommages et interets en cas d'inexecution. Le juge peut la moderer si elle est manifestement excessive.",
-    "Les vices du consentement : erreur (meprise sur un element essentiel), dol (manoeuvres frauduleuses) et violence (contrainte illegitime). Ils permettent la nullite relative.",
-    "L'externalite positive est un effet benefique non paye. Ex : une entreprise qui forme ses salaries ameliore leur employabilite generale au-dela de l'entreprise.",
-    "La prescription de droit commun en matiere contractuelle est de 5 ans en France (art. 2224 du Code civil), a compter du jour ou le titulaire connait les faits.",
-    "Les 3 finalites sont interdependantes : economique (profit, perennite), sociale (bien-etre des salaries, emploi) et societale (respect de l'environnement, RSE).",
-    "Freeman (1984) : une partie prenante est tout individu ou groupe qui peut affecter ou etre affecte par la realisation des objectifs de l'organisation.",
-    "Efficacite = atteindre l'objectif (faire ce qu'il faut). Efficience = atteindre l'objectif avec un minimum de moyens. On peut etre efficace sans etre efficient.",
-    "Profil entrepreneurial : tourne vers l'avenir et le long terme (prise de risque, innovation). Profil managerial : centre sur l'allocation des ressources et le court/moyen terme.",
-    "Le Tableau de Bord Prospectif (TBP) de Kaplan & Norton analyse l'entreprise sous 4 axes : financier, clients, processus internes, apprentissage et innovation.",
-    "PESTEL = Politique, Economique, Social, Technologique, Ecologique, Legal. C'est un outil de diagnostic externe qui identifie les opportunites et menaces de l'environnement macro."
-  ];
-
   let gamePin = null, playerId = null, playerName = null;
-  let playerAvatar = '😀';
-  let playerPhoto = null;
-  let currentQ = -1, hasAnswered = false, timeLeft = 20;
-  let myStreak = 0;
-  let timerInterval = null;
-
-  // ── CROP STATE ──
-  let cropImg = null, cropScale = 1, cropOffsetX = 0, cropOffsetY = 0;
-  let cropDragging = false, cropStartX = 0, cropStartY = 0, cropLastX = 0, cropLastY = 0;
+  let currentQ = -1, hasAnswered = false;
+  let timeLeft = 20;
 
   function $(id) { return document.getElementById(id); }
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    $(id).classList.add('active');
+  }
   function uid() { return Math.random().toString(36).slice(2, 10); }
 
-  function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const el = $(id);
-    el.classList.add('active');
-    el.classList.remove('anim-in');
-    void el.offsetWidth;
-    el.classList.add('anim-in');
-  }
+  // ── JOIN ──
+  window.joinGame = async function() {
+    const pin = $('pin-input').value.trim();
+    const name = $('name-input').value.trim();
+    if (!pin || !name) { showErr('Remplis le code PIN et ton prénom !'); return; }
+    if (name.length > 20) { showErr('Prénom trop long (max 20 caractères)'); return; }
+
+    const snap = await get(ref(db, `games/${pin}`));
+    if (!snap.exists()) { showErr('❌ Partie introuvable. Vérifie le code PIN.'); return; }
+
+    const game = snap.val();
+    if (game.phase !== 'lobby') { showErr('⏳ La partie a déjà commencé !'); return; }
+
+    gamePin = pin;
+    playerName = name;
+    playerId = uid();
+
+    await set(ref(db, `games/${gamePin}/players/${playerId}`), {
+      name: playerName,
+      score: 0,
+      joined: Date.now()
+    });
+
+    show('screen-wait');
+    $('wait-name').textContent = playerName;
+
+    // Listen game state
+    onValue(ref(db, `games/${gamePin}`), snap => {
+      const g = snap.val();
+      if (!g) return;
+      if (g.phase === 'question' && g.currentQ !== currentQ) {
+        currentQ = g.currentQ;
+        hasAnswered = false;
+        timeLeft = g.timeLeft || 20;
+        renderQuestion(g.questionData);
+        show('screen-question');
+      }
+      if (g.phase === 'reveal' && g.questionData) {
+        showReveal(g.questionData.correct);
+      }
+      if (g.phase === 'podium') {
+        showPodium();
+      }
+      if (g.timeLeft !== undefined) timeLeft = g.timeLeft;
+    });
+  };
 
   function showErr(msg) {
     $('join-error').textContent = msg;
     $('join-error').style.display = 'block';
   }
 
-  // ── STEP 1 ──
-  window.goToAvatar = function() {
-    const pin = $('pin-input').value.trim();
-    const name = $('name-input').value.trim();
-    if (!pin || !name) { showErr('Remplis le code PIN et ton prenom !'); return; }
-    if (name.length > 20) { showErr('Prenom trop long (max 20 caracteres)'); return; }
-    $('join-error').style.display = 'none';
-    window._tmpPin = pin;
-    window._tmpName = name;
-    showScreen('screen-avatar');
-    renderEmojiGrid();
-  };
-
-  function renderEmojiGrid() {
-    $('emoji-grid').innerHTML = EMOJIS.map((e, i) =>
-      `<button class="emoji-btn ${i === 0 ? 'selected' : ''}" onclick="selectEmoji('${e}', this)">${e}</button>`
-    ).join('');
-  }
-
-  window.selectEmoji = function(emoji, btn) {
-    playerAvatar = emoji;
-    playerPhoto = null;
-    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    const prev = $('avatar-preview');
-    prev.textContent = emoji;
-    prev.style.backgroundImage = 'none';
-    prev.style.background = 'rgba(255,255,255,0.08)';
-    $('photo-controls').style.display = 'none';
-  };
-
-  // ── PHOTO UPLOAD ──
-  window.triggerPhoto = function() { $('photo-input').click(); };
-
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('photo-input').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const img = new Image();
-        img.onload = function() {
-          cropImg = img;
-          cropScale = 1;
-          cropOffsetX = 0;
-          cropOffsetY = 0;
-          drawCrop();
-          $('photo-controls').style.display = 'block';
-          document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-          playerAvatar = null;
-        };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // ── CROP CANVAS EVENTS ──
-    const cc = $('crop-canvas');
-    cc.addEventListener('mousedown', e => { cropDragging = true; cropStartX = e.offsetX - cropOffsetX; cropStartY = e.offsetY - cropOffsetY; });
-    cc.addEventListener('mousemove', e => { if (!cropDragging) return; cropOffsetX = e.offsetX - cropStartX; cropOffsetY = e.offsetY - cropStartY; drawCrop(); });
-    cc.addEventListener('mouseup', () => cropDragging = false);
-    cc.addEventListener('mouseleave', () => cropDragging = false);
-
-    // Touch support
-    cc.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; const r = cc.getBoundingClientRect(); cropDragging = true; cropLastX = t.clientX - r.left; cropLastY = t.clientY - r.top; cropStartX = cropLastX - cropOffsetX; cropStartY = cropLastY - cropOffsetY; });
-    cc.addEventListener('touchmove', e => { e.preventDefault(); if (!cropDragging) return; const t = e.touches[0]; const r = cc.getBoundingClientRect(); cropOffsetX = (t.clientX - r.left) - cropStartX; cropOffsetY = (t.clientY - r.top) - cropStartY; drawCrop(); });
-    cc.addEventListener('touchend', () => cropDragging = false);
-  });
-
-  function drawCrop() {
-    if (!cropImg) return;
-    const cc = $('crop-canvas');
-    const ctx = cc.getContext('2d');
-    const S = 200;
-    cc.width = S; cc.height = S;
-    ctx.clearRect(0, 0, S, S);
-    // Circle clip
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(S/2, S/2, S/2, 0, Math.PI*2);
-    ctx.clip();
-    // Fit image
-    const base = Math.min(S / cropImg.width, S / cropImg.height) * cropScale;
-    const w = cropImg.width * base;
-    const h = cropImg.height * base;
-    const x = (S - w) / 2 + cropOffsetX;
-    const y = (S - h) / 2 + cropOffsetY;
-    ctx.drawImage(cropImg, x, y, w, h);
-    ctx.restore();
-    // Circle border
-    ctx.beginPath();
-    ctx.arc(S/2, S/2, S/2 - 2, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(245,158,11,0.6)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Update avatar preview
-    const prev = $('avatar-preview');
-    prev.textContent = '';
-    prev.style.backgroundImage = `url(${cc.toDataURL('image/jpeg', 0.85)})`;
-    prev.style.backgroundSize = 'cover';
-    prev.style.backgroundPosition = 'center';
-    prev.style.background = prev.style.backgroundImage;
-  }
-
-  window.cropZoom = function(delta) {
-    cropScale = Math.max(0.5, Math.min(4, cropScale + delta));
-    drawCrop();
-  };
-
-  window.validateCrop = function() {
-    if (!cropImg) return;
-    const cc = $('crop-canvas');
-    playerPhoto = cc.toDataURL('image/jpeg', 0.82);
-    playerAvatar = null;
-    $('photo-controls').style.display = 'none';
-    // Show checkmark on avatar preview
-    const prev = $('avatar-preview');
-    prev.style.backgroundImage = `url(${playerPhoto})`;
-    prev.style.backgroundSize = 'cover';
-    prev.style.backgroundPosition = 'center';
-    prev.textContent = '';
-  };
-
-  window.removePhoto = function() {
-    playerPhoto = null;
-    cropImg = null;
-    playerAvatar = EMOJIS[0];
-    const prev = $('avatar-preview');
-    prev.textContent = EMOJIS[0];
-    prev.style.backgroundImage = 'none';
-    prev.style.background = 'rgba(255,255,255,0.08)';
-    $('photo-controls').style.display = 'none';
-    document.querySelectorAll('.emoji-btn')[0]?.classList.add('selected');
-    $('photo-input').value = '';
-  };
-
-  // ── JOIN ──
-  window.joinGame = async function() {
-    const pin = window._tmpPin;
-    const name = window._tmpName;
-
-    // Validate crop if photo loaded but not confirmed
-    if (cropImg && !playerPhoto) validateCrop();
-
-    const snap = await get(ref(db, `games/${pin}`));
-    if (!snap.exists()) { showScreen('screen-join'); showErr('Partie introuvable. Verifie le code PIN.'); return; }
-    if (snap.val().phase !== 'lobby') { showScreen('screen-join'); showErr('La partie a deja commence !'); return; }
-
-    gamePin = pin;
-    playerName = name;
-    playerId = uid();
-
-    const avatarData = playerPhoto || playerAvatar || EMOJIS[0];
-    const isPhoto = !!playerPhoto;
-
-    await set(ref(db, `games/${gamePin}/players/${playerId}`), {
-      name, score: 0, joined: Date.now(),
-      avatar: avatarData.slice(0, 3000),
-      isPhoto
-    });
-
-    showScreen('screen-wait');
-    $('wait-name').textContent = name;
-    renderAv($('wait-avatar-display'), avatarData, isPhoto, 64);
-
-    onValue(ref(db, `games/${gamePin}`), snap => {
-      const g = snap.val();
-      if (!g) return;
-      if (g.timeLeft !== undefined) timeLeft = g.timeLeft;
-
-      if (g.phase === 'question' && g.currentQ !== currentQ) {
-        currentQ = g.currentQ;
-        hasAnswered = false;
-        renderQuestion(g.questionData);
-        showScreen('screen-question');
-        startClientTimer(g.timeLeft || 20);
-      }
-      if (g.phase === 'reveal' && g.questionData?.correct >= 0) {
-        showReveal(g.questionData.correct);
-      }
-      if (g.phase === 'podium') showPodium();
-    });
-  };
-
-  // ── AVATAR HELPER ──
-  function renderAv(el, avatar, isPhoto, size) {
-    el.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;`;
-    if (isPhoto) {
-      el.style.backgroundImage = `url(${avatar})`;
-      el.style.backgroundSize = 'cover';
-      el.style.backgroundPosition = 'center';
-      el.textContent = '';
-    } else {
-      el.style.background = 'rgba(255,255,255,0.1)';
-      el.style.fontSize = Math.round(size * 0.52) + 'px';
-      el.textContent = avatar;
-    }
-  }
-
-  // ── TIMER ──
-  function startClientTimer(initial) {
-    clearInterval(timerInterval);
-    let t = initial;
-    updateTimerUI(t);
-    timerInterval = setInterval(() => {
-      t = Math.max(0, t - 1);
-      updateTimerUI(t);
-      if (t <= 0) clearInterval(timerInterval);
-    }, 1000);
-  }
-
-  function updateTimerUI(t) {
-    const num = $('p-timer-num');
-    const circle = $('p-timer-circle');
-    if (!num || !circle) return;
-    num.textContent = t;
-    const pct = (t / 20) * 100;
-    const color = t <= 5 ? '#ef4444' : t <= 10 ? '#f59e0b' : '#22c55e';
-    circle.style.background = `conic-gradient(${color} ${pct}%, rgba(255,255,255,0.07) 0)`;
-    num.style.color = t <= 5 ? '#ef4444' : '#f0f0f0';
-  }
-
-  // ── QUESTION ──
   function renderQuestion(qData) {
     if (!qData) return;
     $('p-cat').textContent = qData.cat;
     $('p-q-num').textContent = `Question ${qData.index + 1} / ${qData.total}`;
     $('p-q-text').textContent = qData.text;
-    $('p-feedback').style.display = 'none';
-    $('p-explanation').style.display = 'none';
-    $('p-waiting').style.display = 'none';
 
-    $('p-answers').innerHTML = qData.answers.map((a, i) =>
-      `<button class="p-btn" id="pbtn-${i}"
-        style="border-color:${COLORS[i]};background:${COLORS[i]}18;color:${COLORS[i]}"
-        onclick="selectAnswer(${i})">
-        <div class="p-btn-label" style="background:${COLORS[i]}">${LABELS[i]}</div>
-        <span class="p-btn-text">${a}</span>
+    const colors = ['#3498db','#e94560','#f5a623','#2ecc71'];
+    const icons = ['▲','●','■','✦'];
+    const labels = ['A','B','C','D'];
+    const grid = $('p-answers');
+    grid.innerHTML = qData.answers.map((a, i) =>
+      `<button class="p-ans-btn" style="background:${colors[i]}22;border-color:${colors[i]};color:${colors[i]}" onclick="selectAnswer(${i})">
+        <span class="p-ans-icon" style="background:${colors[i]}">${icons[i]}</span>
+        <span class="p-ans-label">${labels[i]}</span>
+        <span class="p-ans-text">${a}</span>
       </button>`
     ).join('');
 
-    $('p-q-text').classList.remove('q-pop');
-    void $('p-q-text').offsetWidth;
-    $('p-q-text').classList.add('q-pop');
+    $('p-feedback').style.display = 'none';
+    $('p-waiting').style.display = 'none';
   }
 
   window.selectAnswer = async function(idx) {
     if (hasAnswered) return;
     hasAnswered = true;
-    clearInterval(timerInterval);
 
     await set(ref(db, `games/${gamePin}/answers/${playerId}`), {
-      answer: idx, timeLeft, name: playerName
+      answer: idx,
+      timeLeft: timeLeft,
+      name: playerName
     });
 
-    document.querySelectorAll('.p-btn').forEach((b, i) => {
+    // Dim all buttons
+    document.querySelectorAll('.p-ans-btn').forEach(b => {
       b.disabled = true;
-      b.style.opacity = i === idx ? '1' : '0.22';
-      if (i === idx) b.style.transform = 'scale(1.04)';
+      b.style.opacity = '0.4';
     });
+    // Highlight selected
+    const btns = document.querySelectorAll('.p-ans-btn');
+    btns[idx].style.opacity = '1';
+    btns[idx].style.transform = 'scale(1.04)';
+
     $('p-waiting').style.display = 'flex';
   };
 
   function showReveal(correctIdx) {
     if (correctIdx === undefined || correctIdx < 0) return;
-    clearInterval(timerInterval);
-    updateTimerUI(0);
+    const btns = document.querySelectorAll('.p-ans-btn');
+    if (!btns.length) return;
 
-    document.querySelectorAll('.p-btn').forEach((b, i) => {
+    btns.forEach((b, i) => {
       b.disabled = true;
       if (i === correctIdx) {
         b.style.opacity = '1';
-        b.style.background = 'rgba(34,197,94,0.2)';
-        b.style.borderColor = '#22c55e';
-        b.style.color = '#22c55e';
+        b.style.background = 'rgba(46,204,113,0.3)';
+        b.style.borderColor = '#2ecc71';
+        b.style.color = '#2ecc71';
       } else {
-        b.style.opacity = '0.18';
+        b.style.opacity = '0.3';
       }
     });
 
     $('p-waiting').style.display = 'none';
 
-    get(ref(db, `games/${gamePin}/answers/${playerId}`)).then(s => {
+    // Check if user was correct
+    const fb = $('p-feedback');
+    const snap = get(ref(db, `games/${gamePin}/answers/${playerId}`)).then(s => {
       const ans = s.val();
-      const fb = $('p-feedback');
       fb.style.display = 'flex';
       if (ans && ans.answer === correctIdx) {
-        myStreak++;
-        fb.className = 'p-feedback fb-correct';
-        fb.textContent = myStreak >= 3 ? `Serie de ${myStreak} !` : 'Bonne reponse !';
+        fb.className = 'p-feedback correct-fb';
+        fb.innerHTML = '<span>✅</span><span>Bonne réponse !</span>';
+      } else if (!ans) {
+        fb.className = 'p-feedback wrong-fb';
+        fb.innerHTML = '<span>⏰</span><span>Temps écoulé !</span>';
       } else {
-        myStreak = 0;
-        fb.className = 'p-feedback fb-wrong';
-        fb.textContent = ans ? 'Mauvaise reponse' : 'Temps ecoule !';
-      }
-
-      // Show explanation
-      if (currentQ >= 0 && currentQ < EXPLANATIONS.length) {
-        const expl = $('p-explanation');
-        expl.textContent = EXPLANATIONS[currentQ];
-        expl.style.display = 'block';
+        fb.className = 'p-feedback wrong-fb';
+        fb.innerHTML = '<span>❌</span><span>Mauvaise réponse…</span>';
       }
     });
   }
 
-  // ── PODIUM ──
   async function showPodium() {
-    clearInterval(timerInterval);
-    showScreen('screen-podium');
-    const [pSnap, meSnap] = await Promise.all([
+    show('screen-podium');
+    const [playersSnap, mySnap] = await Promise.all([
       get(ref(db, `games/${gamePin}/players`)),
       get(ref(db, `games/${gamePin}/players/${playerId}`))
     ]);
-    const players = Object.values(pSnap.val() || {}).sort((a,b) => (b.score||0)-(a.score||0));
-    const me = meSnap.val();
+    const players = Object.values(playersSnap.val() || {}).sort((a,b)=>(b.score||0)-(a.score||0));
+    const me = mySnap.val();
     const rank = players.findIndex(p => p.name === playerName) + 1;
-    const rankLabels = ['1er','2eme','3eme'];
 
-    $('my-rank').textContent = rankLabels[rank-1] || `#${rank}`;
+    $('my-rank').textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
     $('my-score').textContent = (me?.score || 0) + ' pts';
-    $('my-name-display').textContent = playerName;
+    $('my-name-pod').textContent = playerName;
 
-    const avatarData = playerPhoto || playerAvatar || EMOJIS[0];
-    renderAv($('my-avatar-pod'), avatarData, !!playerPhoto, 60);
-
-    $('final-lb').innerHTML = players.slice(0,10).map((p,i) => {
-      const av = p.avatar || EMOJIS[0];
-      const isP = p.isPhoto;
-      const avStyle = isP
-        ? `style="background-image:url(${av});background-size:cover;background-position:center"`
-        : `style="background:rgba(255,255,255,0.09);font-size:1rem"`;
-      return `<div class="lb-row ${p.name===playerName?'lb-me':''} ${i===0?'lb-gold':i===1?'lb-silver':i===2?'lb-bronze':''}">
-        <div class="lb-avatar" ${avStyle}>${isP?'':av}</div>
-        <span class="lb-rank">${rankLabels[i]||`#${i+1}`}</span>
-        <span class="lb-name">${p.name}</span>
-        <span class="lb-score">${p.score||0} pts</span>
-      </div>`;
-    }).join('');
-
-    launchConfetti();
-  }
-
-  function launchConfetti() {
-    const canvas = $('p-confetti');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    canvas.style.display = 'block';
-    const pieces = Array.from({length:80},()=>({
-      x:Math.random()*canvas.width, y:Math.random()*-canvas.height,
-      w:Math.random()*9+4, h:Math.random()*5+3,
-      color:['#f59e0b','#3b82f6','#22c55e','#ef4444','#a855f7','#fff'][Math.floor(Math.random()*6)],
-      speed:Math.random()*2.5+1.5, angle:Math.random()*360, spin:(Math.random()-0.5)*4
-    }));
-    let frames=0;
-    (function draw(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      pieces.forEach(p=>{
-        ctx.save();ctx.translate(p.x+p.w/2,p.y+p.h/2);
-        ctx.rotate(p.angle*Math.PI/180);ctx.fillStyle=p.color;
-        ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
-        p.y+=p.speed;p.angle+=p.spin;
-        if(p.y>canvas.height){p.y=-20;p.x=Math.random()*canvas.width;}
-      });
-      if(++frames<280)requestAnimationFrame(draw);
-      else canvas.style.display='none';
-    })();
+    const medals = ['🥇','🥈','🥉'];
+    $('final-lb').innerHTML = players.slice(0,8).map((p,i) =>
+      `<div class="lb-row ${p.name === playerName ? 'me' : ''} ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">
+        <span>${medals[i]||`#${i+1}`}</span>
+        <span style="flex:1">${p.name}</span>
+        <span>${p.score||0} pts</span>
+      </div>`
+    ).join('');
   }
 </script>
+
 <style>
 :root {
-  --bg: #080812; --card: #13132e; --border: rgba(255,255,255,0.07);
-  --gold: #f59e0b; --blue: #3b82f6; --red: #ef4444; --green: #22c55e;
-  --text: #f0f0f0; --muted: #64748b; --r: 14px;
+  --bg: #0d0d1a;
+  --card: #13132a;
+  --gold: #f5a623;
+  --red: #e94560;
+  --green: #2ecc71;
+  --text: #eaeaea;
+  --muted: #6677aa;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text);
-  min-height: 100vh; display: flex; align-items: flex-start; justify-content: center;
-  padding: 16px;
-  background-image:
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(239,68,68,0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 20% 20%, rgba(59,130,246,0.08) 0%, transparent 55%);
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background-image: radial-gradient(ellipse at 80% 80%, rgba(233,69,96,0.1) 0%, transparent 50%),
+                    radial-gradient(ellipse at 20% 20%, rgba(245,166,35,0.08) 0%, transparent 50%);
 }
-.screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 440px; gap: 12px; padding-top: 8px; }
-.screen.active { display: flex; }
-.screen.anim-in { animation: fadeUp 0.35s cubic-bezier(0.16,1,0.3,1); }
-@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 480px; gap: 16px; }
+.screen.active { display: flex; animation: fadeUp 0.35s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 
-/* CARD */
-.card { background: var(--card); border-radius: 18px; border: 1px solid var(--border); width: 100%; }
-.card-padded { padding: 28px 24px; }
-.logo { font-family: 'Montserrat', sans-serif; font-size: 1.9rem; font-weight: 900; color: var(--text); margin-bottom: 4px; text-align: center; }
-.logo em { color: var(--gold); font-style: normal; }
-.tagline { color: var(--muted); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 22px; text-align: center; display: block; }
-
-/* FIELDS */
-.field { margin-bottom: 11px; }
-.field label { display: block; font-size: 0.64rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; }
-.field input { width: 100%; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.09); color: var(--text); font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700; outline: none; transition: border-color 0.2s; }
+/* JOIN */
+.join-card { background: var(--card); border-radius: 20px; padding: 40px 32px; text-align: center; width: 100%; border: 1px solid rgba(245,166,35,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.logo { font-family: 'Montserrat', sans-serif; font-size: 2.6rem; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+.logo span { color: var(--red); }
+.tagline { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+.field { margin-bottom: 14px; text-align: left; }
+.field label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.field input {
+  width: 100%; padding: 14px 16px; border-radius: 12px;
+  background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.1);
+  color: var(--text); font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700;
+  outline: none; transition: border-color 0.2s;
+}
 .field input:focus { border-color: var(--gold); }
 .field input::placeholder { color: var(--muted); font-weight: 400; }
-#pin-input { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; letter-spacing: 8px; text-align: center; }
-
-/* BUTTONS */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; border-radius: 50px; border: none; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.18s; letter-spacing: 0.3px; }
-.btn-blue { background: var(--blue); color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,0.3); }
-.btn-blue:hover { background: #2563eb; transform: translateY(-2px); }
-.btn-green { background: var(--green); color: #000; box-shadow: 0 4px 16px rgba(34,197,94,0.3); }
-.btn-green:hover { background: #16a34a; color: #fff; transform: translateY(-2px); }
-.btn-ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
-.btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
-.btn-sm { padding: 9px 16px; font-size: 0.78rem; width: auto; border-radius: 30px; }
-.error { color: var(--red); font-size: 0.8rem; font-weight: 700; display: none; background: rgba(239,68,68,0.08); padding: 9px 13px; border-radius: 9px; border: 1px solid rgba(239,68,68,0.22); margin-top: 10px; text-align: center; }
-
-/* AVATAR SCREEN */
-.section-lbl { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
-.avatar-preview-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-#avatar-preview { width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 1.7rem; flex-shrink: 0; transition: all 0.2s; }
-.avatar-meta strong { font-family: 'Montserrat', sans-serif; font-size: 1rem; }
-.avatar-meta small { color: var(--muted); font-size: 0.72rem; display: block; margin-top: 2px; }
-
-.emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin-bottom: 14px; }
-.emoji-btn { background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 7px; font-size: 1.35rem; cursor: pointer; transition: all 0.15s; line-height: 1; }
-.emoji-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
-.emoji-btn.selected { border-color: var(--gold); background: rgba(245,158,11,0.15); transform: scale(1.1); }
-
-.divider { display: flex; align-items: center; gap: 10px; margin: 12px 0; color: var(--muted); font-size: 0.75rem; font-weight: 700; }
-.divider::before, .divider::after { content:''; flex:1; height:1px; background: rgba(255,255,255,0.08); }
-
-.photo-import-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border-radius: 10px; border: 1.5px dashed rgba(255,255,255,0.14); background: transparent; color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.18s; }
-.photo-import-btn:hover { border-color: var(--blue); color: var(--blue); }
-
-/* CROP ZONE */
-#photo-controls { display: none; margin-top: 12px; }
-.crop-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; }
-.crop-hint { color: var(--muted); font-size: 0.74rem; text-align: center; }
-#crop-canvas { border-radius: 50%; cursor: grab; display: block; width: 160px; height: 160px; touch-action: none; }
-#crop-canvas:active { cursor: grabbing; }
-.crop-zoom-row { display: flex; align-items: center; gap: 10px; }
-.crop-zoom-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; color: var(--text); transition: background 0.15s; }
-.crop-zoom-btn:hover { background: rgba(255,255,255,0.15); }
-.crop-zoom-label { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
-.crop-actions { display: flex; gap: 8px; width: 100%; }
+#pin-input { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; letter-spacing: 6px; text-align: center; }
+.btn { background: linear-gradient(135deg, var(--red), #c0392b); color: white; border: none; padding: 16px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: 800; font-family: 'Montserrat', sans-serif; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(233,69,96,0.4); width: 100%; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.5); }
+.error { color: var(--red); font-size: 0.88rem; font-weight: 700; display: none; background: rgba(233,69,96,0.1); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(233,69,96,0.3); margin-top: 10px; }
 
 /* WAIT */
-.wait-card { padding: 34px 24px; text-align: center; border-color: rgba(34,197,94,0.15); }
-#wait-avatar-display { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 14px; border: 2px solid rgba(255,255,255,0.1); }
-.wait-card h2 { font-family: 'Montserrat', sans-serif; font-size: 1.3rem; margin-bottom: 6px; }
-.wait-card p { color: var(--muted); font-size: 0.84rem; }
-.dots::after { content:''; animation: dotdot 1.4s infinite steps(4,end); }
-@keyframes dotdot { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
+.wait-card { background: var(--card); border-radius: 20px; padding: 40px; text-align: center; width: 100%; border: 1px solid rgba(255,255,255,0.06); }
+.wait-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--red), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 16px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.wait-card h2 { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; margin-bottom: 6px; }
+.wait-card p { color: var(--muted); font-size: 0.9rem; }
+.dots { display: inline-block; animation: dots 1.4s infinite; }
+@keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
 
 /* QUESTION */
-.q-top { display: flex; align-items: center; gap: 10px; width: 100%; }
-.p-timer-wrap { width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; transition: background 0.15s; }
-.p-timer-inner { position: absolute; inset: 6px; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.1rem; }
-.p-cat { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); padding: 4px 11px; border-radius: 18px; font-size: 0.68rem; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
-.p-q-num { font-size: 0.7rem; color: var(--muted); font-weight: 700; white-space: nowrap; margin-left: auto; }
-.p-question { background: var(--card); border-radius: var(--r); padding: 18px 20px; width: 100%; font-size: 1rem; font-weight: 700; line-height: 1.55; border: 1px solid rgba(255,255,255,0.08); }
-.p-question.q-pop { animation: qPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-@keyframes qPop { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
-
-.p-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; }
-.p-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 13px 8px; border-radius: 13px; border: 1.5px solid; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; transition: all 0.2s; min-height: 82px; background: transparent; }
-.p-btn:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-.p-btn-label { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.85rem; color: #fff; }
-.p-btn-text { font-size: 0.72rem; text-align: center; line-height: 1.3; }
-
-.p-feedback { display: none; align-items: center; justify-content: center; padding: 11px 16px; border-radius: 11px; width: 100%; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.95rem; animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-@keyframes popIn { from{opacity:0;transform:scale(0.82)} to{opacity:1;transform:scale(1)} }
-.fb-correct { background: rgba(34,197,94,0.14); border: 1.5px solid rgba(34,197,94,0.32); color: #86efac; }
-.fb-wrong { background: rgba(239,68,68,0.1); border: 1.5px solid rgba(239,68,68,0.28); color: #fca5a5; }
-
-/* EXPLANATION */
-.p-explanation {
-  display: none; width: 100%;
-  background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.22);
-  border-radius: 11px; padding: 12px 16px;
-  font-size: 0.82rem; color: #fcd680; line-height: 1.6;
-  animation: fadeUp 0.4s ease;
+.p-top { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+.p-cat { background: rgba(245,166,35,0.15); border: 1px solid rgba(245,166,35,0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; color: var(--gold); font-weight: 700; }
+.p-q-num { font-size: 0.82rem; color: var(--muted); font-weight: 700; }
+.p-question { background: var(--card); border-radius: 16px; padding: 22px 24px; width: 100%; font-size: 1.1rem; font-weight: 700; line-height: 1.5; border: 1px solid rgba(255,255,255,0.07); }
+.p-answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.p-ans-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 18px 12px; border-radius: 14px; border: 2px solid; cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-weight: 700; text-align: center;
+  transition: all 0.2s; min-height: 100px;
 }
-.p-explanation::before { content: 'Explication — '; font-weight: 800; color: var(--gold); }
-
-.p-waiting { display: none; align-items: center; gap: 9px; color: var(--muted); font-size: 0.8rem; font-weight: 700; }
-.spinner { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.p-ans-btn:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.p-ans-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; }
+.p-ans-label { font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 900; opacity: 0.6; }
+.p-ans-text { font-size: 0.82rem; line-height: 1.3; }
+.p-feedback { padding: 12px 20px; border-radius: 12px; display: none; align-items: center; gap: 12px; font-weight: 700; font-size: 1rem; width: 100%; animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.p-feedback.correct-fb { background: rgba(46,204,113,0.2); border: 2px solid var(--green); color: var(--green); }
+.p-feedback.wrong-fb { background: rgba(231,76,60,0.2); border: 2px solid #e74c3c; color: #e74c3c; }
+@keyframes popIn { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+.p-waiting { display: none; align-items: center; gap: 10px; color: var(--muted); font-size: 0.9rem; font-weight: 700; }
+.spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
 
 /* PODIUM */
-.podium-card { padding: 26px 22px; text-align: center; border-color: rgba(245,158,11,0.18); }
-#my-avatar-pod { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 10px; border: 2px solid rgba(245,158,11,0.4); }
-.my-rank-big { font-family: 'Montserrat', sans-serif; font-size: 3rem; font-weight: 900; color: var(--gold); animation: bounce 0.6s ease 0.3s both; }
-@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-.my-score-big { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; font-weight: 900; margin-bottom: 3px; }
-.my-name-lbl { color: var(--muted); font-size: 0.8rem; margin-bottom: 18px; }
-.lb-section-title { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-weight: 700; margin-bottom: 10px; text-align: left; }
-.lb-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 9px; margin-bottom: 5px; background: rgba(255,255,255,0.03); font-size: 0.84rem; }
-.lb-me { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
-.lb-gold { background: rgba(245,158,11,0.07); }
-.lb-silver { background: rgba(148,163,184,0.06); }
-.lb-bronze { background: rgba(180,120,60,0.06); }
-.lb-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.lb-rank { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.7rem; color: var(--muted); width: 30px; }
-.lb-name { flex: 1; font-weight: 700; }
-.lb-score { font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--gold); font-size: 0.82rem; }
-
-#p-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 9999; display: none; }
+.podium-card { background: var(--card); border-radius: 20px; padding: 36px; text-align: center; width: 100%; border: 1px solid rgba(245,166,35,0.2); }
+.my-result { margin-bottom: 24px; }
+.my-rank-big { font-size: 4rem; animation: bounce 0.6s ease 0.3s both; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+.my-score-big { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 900; color: var(--gold); }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; margin-bottom: 6px; background: rgba(255,255,255,0.04); font-size: 0.92rem; }
+.lb-row.me { background: rgba(245,166,35,0.15); border: 1px solid rgba(245,166,35,0.3); }
+.lb-row.gold { background: rgba(245,166,35,0.12); }
+.lb-row.silver { background: rgba(192,192,192,0.08); }
+.lb-row.bronze { background: rgba(205,127,50,0.08); }
 </style>
 </head>
 <body>
-<canvas id="p-confetti"></canvas>
-<input type="file" id="photo-input" accept="image/*" style="display:none">
 
 <!-- JOIN -->
 <div class="screen active" id="screen-join">
-  <div class="card card-padded" style="border-color:rgba(245,158,11,0.18)">
-    <div class="logo"><em>CEJM</em> Quiz</div>
-    <span class="tagline">Rejoindre une partie</span>
+  <div class="join-card">
+    <div class="logo">K<span>!</span>CEJM</div>
+    <div class="tagline">Rejoindre une partie</div>
     <div class="field">
       <label>Code PIN de la salle</label>
       <input type="number" id="pin-input" placeholder="123456" maxlength="6">
     </div>
     <div class="field">
-      <label>Ton prenom</label>
+      <label>Ton prénom</label>
       <input type="text" id="name-input" placeholder="Ex : Yunus" maxlength="20">
     </div>
-    <button class="btn btn-blue" onclick="goToAvatar()">Continuer</button>
+    <button class="btn" onclick="joinGame()">🚀 Rejoindre</button>
     <div class="error" id="join-error"></div>
-  </div>
-</div>
-
-<!-- AVATAR -->
-<div class="screen" id="screen-avatar">
-  <div class="card card-padded">
-    <div class="logo" style="font-size:1.4rem;margin-bottom:2px">Choisis ton <em>avatar</em></div>
-    <span class="tagline">Il sera visible par tous les joueurs</span>
-
-    <div class="avatar-preview-row">
-      <div id="avatar-preview">😀</div>
-      <div class="avatar-meta">
-        <strong>Ton avatar</strong>
-        <small>Emoji ou photo de profil</small>
-      </div>
-    </div>
-
-    <div class="section-lbl">Emojis</div>
-    <div class="emoji-grid" id="emoji-grid"></div>
-
-    <div class="divider">ou</div>
-
-    <button class="photo-import-btn" onclick="triggerPhoto()">+ Importer une photo</button>
-
-    <!-- CROP ZONE -->
-    <div id="photo-controls">
-      <div class="crop-wrap">
-        <div class="crop-hint">Deplace pour cadrer — utilise les boutons pour zoomer</div>
-        <canvas id="crop-canvas" width="200" height="200"></canvas>
-        <div class="crop-zoom-row">
-          <button class="crop-zoom-btn" onclick="cropZoom(-0.2)">−</button>
-          <span class="crop-zoom-label">Zoom</span>
-          <button class="crop-zoom-btn" onclick="cropZoom(0.2)">+</button>
-        </div>
-        <div class="crop-actions">
-          <button class="btn btn-green btn-sm" onclick="validateCrop()" style="flex:1">Valider ce cadrage</button>
-          <button class="btn btn-ghost btn-sm" onclick="removePhoto()" style="flex:0 0 auto">Supprimer</button>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn btn-green" onclick="joinGame()" style="margin-top:14px">Rejoindre la partie</button>
-    <button class="btn btn-ghost" onclick="showScreen('screen-join')" style="margin-top:8px">Retour</button>
   </div>
 </div>
 
 <!-- WAIT -->
 <div class="screen" id="screen-wait">
-  <div class="card wait-card">
-    <div id="wait-avatar-display"></div>
+  <div class="wait-card">
+    <div class="wait-avatar">🎓</div>
     <h2>Bienvenue, <span id="wait-name"></span> !</h2>
-    <p>En attente du demarrage<span class="dots"></span></p>
+    <p>En attente du démarrage<span class="dots">...</span></p>
   </div>
 </div>
 
 <!-- QUESTION -->
 <div class="screen" id="screen-question">
-  <div class="q-top">
-    <div class="p-timer-wrap" id="p-timer-circle" style="background:conic-gradient(#22c55e 100%, rgba(255,255,255,0.07) 0)">
-      <div class="p-timer-inner" id="p-timer-num">20</div>
-    </div>
-    <div class="p-cat" id="p-cat">Economie</div>
+  <div class="p-top">
+    <div class="p-cat" id="p-cat">📊 Économie</div>
     <div class="p-q-num" id="p-q-num">Question 1 / 25</div>
   </div>
-  <div class="p-question" id="p-q-text"></div>
-  <div class="p-answers" id="p-answers"></div>
+  <div class="p-question" id="p-q-text">…</div>
+  <div class="p-answers-grid" id="p-answers"></div>
   <div class="p-feedback" id="p-feedback"></div>
-  <div class="p-explanation" id="p-explanation"></div>
   <div class="p-waiting" id="p-waiting">
     <div class="spinner"></div>
-    <span>Reponse envoyee — en attente...</span>
+    <span>Réponse envoyée — en attente des autres joueurs…</span>
   </div>
 </div>
 
 <!-- PODIUM -->
 <div class="screen" id="screen-podium">
-  <div class="card podium-card">
-    <div id="my-avatar-pod"></div>
-    <div class="my-rank-big" id="my-rank">?</div>
-    <div class="my-score-big" id="my-score">0 pts</div>
-    <div class="my-name-lbl" id="my-name-display"></div>
-    <div class="lb-section-title">Classement final</div>
+  <div class="podium-card">
+    <div class="my-result">
+      <div class="my-rank-big" id="my-rank">🏆</div>
+      <div class="my-score-big" id="my-score">0 pts</div>
+      <div style="color:var(--muted);font-size:0.9rem;margin-top:4px" id="my-name-pod"></div>
+    </div>
+    <h3 style="font-family:'Montserrat',sans-serif;font-size:0.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">🏆 Classement Final</h3>
     <div id="final-lb"></div>
   </div>
 </div>
