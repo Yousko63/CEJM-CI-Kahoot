@@ -8,7 +8,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
+ 
   const firebaseConfig = {
     apiKey: "AIzaSyDABerqe3MH_GIfhXMs5h4oiG_kPpIJDK8",
     authDomain: "cejm-theme-1.firebaseapp.com",
@@ -18,10 +18,10 @@
     messagingSenderId: "384316446622",
     appId: "1:384316446622:web:30c3b23a2120991e8c688f"
   };
-
+ 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-
+ 
   // ── AUDIO ──
   const AUDIO = {
     timer:   new Audio('https://yousko63.github.io/CEJM-CI-Kahoot/timer.mp3'),
@@ -29,7 +29,7 @@
     wrong:   new Audio('https://yousko63.github.io/CEJM-CI-Kahoot/wrong.mp3'),
     podium:  new Audio('https://yousko63.github.io/CEJM-CI-Kahoot/podium.mp3')
   };
-
+ 
   let currentAudio = null;
   function playAudio(name, loop=false) {
     if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
@@ -43,9 +43,9 @@
   function stopAudio() {
     if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
   }
-
-
-
+ 
+ 
+ 
   const QUESTIONS = [
     { cat: "Economie", q: "Quelle est la definition d'une externalite negative ?", answers: ["Un profit supplementaire non prevu", "Un impact negatif d'une activite economique sur un tiers sans compensation", "Une taxe imposee par l'Etat aux entreprises", "Une barriere a l'entree sur un marche"], correct: 1 },
     { cat: "Economie", q: "Combien de conditions doit respecter la concurrence pure et parfaite (CPP) ?", answers: ["3 conditions", "4 conditions", "5 conditions", "6 conditions"], correct: 2 },
@@ -73,8 +73,8 @@
     { cat: "Management", q: "Quel outil de Kaplan et Norton (1992) analyse l'entreprise sous 4 axes ?", answers: ["Le diagramme de Gantt", "La matrice BCG", "Le tableau de bord prospectif (TBP)", "L'analyse PESTEL"], correct: 2 },
     { cat: "Management", q: "Qu'analyse le modele PESTEL ?", answers: ["Les forces concurrentielles d'un secteur", "L'environnement macro-economique d'une entreprise selon 6 dimensions", "Les ressources internes de l'entreprise", "La performance financiere de l'entreprise"], correct: 1 }
   ];
-
-
+ 
+ 
   const EXPLANATIONS = [
     "Une externalite negative est un effet nefaste subi par un tiers sans contrepartie. Ex : une usine qui pollue un fleuve cause une externalite negative pour les riverains.",
     "La CPP repose sur 5 conditions : atomicite, homogeneite des produits, libre entree/sortie, transparence de l'information et mobilite des facteurs de production.",
@@ -102,17 +102,17 @@
     "Le Tableau de Bord Prospectif (TBP) de Kaplan & Norton (1992) analyse l'entreprise sous 4 axes : financier, clients, processus internes, apprentissage/innovation.",
     "PESTEL = Politique, Economique, Social, Technologique, Ecologique, Legal. Outil de diagnostic externe identifiant les opportunites et menaces de l'environnement macro."
   ];
-
+ 
   const COLORS = ['#3b82f6','#ef4444','#f59e0b','#22c55e'];
   const LABELS = ['A','B','C','D'];
-
+ 
   let gamePin = null, currentQ = -1, timerInterval = null, timeLeft = 20;
   let totalPlayers = 0, answeredCount = 0, revealed = false;
   let answersListener = null;
-
+ 
   function $(id) { return document.getElementById(id); }
   function genPin() { return Math.floor(100000 + Math.random() * 900000).toString(); }
-
+ 
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     const el = $(id);
@@ -121,7 +121,7 @@
     void el.offsetWidth;
     el.classList.add('anim-in');
   }
-
+ 
   function avatarHtml(p, size) {
     const av = p.avatar || '?';
     if (p.isPhoto) {
@@ -129,7 +129,7 @@
     }
     return `<div class="av" style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.5)}px;flex-shrink:0">${av}</div>`;
   }
-
+ 
   window.createGame = async function() {
     gamePin = genPin();
     await set(ref(db, `games/${gamePin}`), {
@@ -139,7 +139,7 @@
     await set(ref(db, `games/${gamePin}/players`), {});
     $('pin-display').textContent = gamePin;
     showScreen('screen-lobby');
-
+ 
     onValue(ref(db, `games/${gamePin}/players`), snap => {
       const players = snap.val() || {};
       const list = Object.values(players);
@@ -153,12 +153,12 @@
       ).join('');
     });
   };
-
+ 
   window.startGame = async function() {
     showScreen('screen-game');
     await nextQuestion();
   };
-
+ 
   async function nextQuestion() {
     currentQ++;
     if (currentQ >= QUESTIONS.length) { endGame(); return; }
@@ -166,13 +166,13 @@
     timeLeft = 20;
     answeredCount = 0;
     revealed = false;
-
+ 
     await update(ref(db, `games/${gamePin}`), {
       phase: 'question', currentQ, timeLeft: 20,
       questionData: { index: currentQ, total: QUESTIONS.length, cat: q.cat, text: q.q, answers: q.answers, correct: -1 }
     });
     await set(ref(db, `games/${gamePin}/answers`), {});
-
+ 
     if (answersListener) answersListener();
     answersListener = onValue(ref(db, `games/${gamePin}/answers`), snap => {
       if (revealed) return;
@@ -185,11 +185,11 @@
         revealAnswers();
       }
     });
-
+ 
     renderQuestion(q);
     startTimer();
   }
-
+ 
   function renderQuestion(q) {
     $('host-q-num').textContent = `Question ${currentQ + 1} sur ${QUESTIONS.length}`;
     $('host-cat').textContent = q.cat;
@@ -197,14 +197,14 @@
     $('host-prog').style.width = `${(currentQ / QUESTIONS.length) * 100}%`;
     $('answered-count').textContent = '0';
     $('total-count').textContent = totalPlayers;
-
+ 
     $('host-answers').innerHTML = q.answers.map((a, i) =>
       `<div class="host-ans" id="ans-${i}" style="border-color:${COLORS[i]};background:${COLORS[i]}18">
         <div class="ans-label" style="background:${COLORS[i]}">${LABELS[i]}</div>
         <span>${a}</span>
       </div>`
     ).join('');
-
+ 
     $('host-timer-num').textContent = 20;
     $('host-timer-circle').style.background = `conic-gradient(#f59e0b 100%, rgba(255,255,255,0.07) 0)`;
     $('reveal-btn').style.display = 'none';
@@ -212,15 +212,15 @@
     $('answer-stats').innerHTML = '';
     $('correct-answer-box').style.display = 'none';
     $('host-explanation').style.display = 'none';
-
+ 
     $('host-q-text').classList.remove('q-pop');
     void $('host-q-text').offsetWidth;
     $('host-q-text').classList.add('q-pop');
-
+ 
     setTimeout(() => { if (!revealed) $('reveal-btn').style.display = 'inline-flex'; }, 3000);
     playAudio('timer', true);
   }
-
+ 
   function startTimer() {
     clearInterval(timerInterval);
     timerInterval = setInterval(async () => {
@@ -233,31 +233,31 @@
       if (timeLeft <= 0) { clearInterval(timerInterval); revealAnswers(); }
     }, 1000);
   }
-
+ 
   window.revealNow = async function() { clearInterval(timerInterval); await revealAnswers(); };
-
+ 
   async function revealAnswers() {
     if (revealed) return;
     revealed = true;
     stopAudio();
     const q = QUESTIONS[currentQ];
     await update(ref(db, `games/${gamePin}`), { phase: 'reveal', 'questionData/correct': q.correct });
-
+ 
     const snap = await get(ref(db, `games/${gamePin}/answers`));
     const answers = snap.val() || {};
     const counts = [0,0,0,0];
     Object.values(answers).forEach(a => { if (a.answer >= 0 && a.answer <= 3) counts[a.answer]++; });
     const total = Math.max(1, Object.keys(answers).length);
-
+ 
     LABELS.forEach((_, i) => {
       const el = $(`ans-${i}`);
       if (!el) return;
       el.classList.add(i === q.correct ? 'ans-correct' : 'ans-wrong');
     });
-
+ 
     $('correct-answer-box').style.display = 'flex';
     $('correct-answer-text').textContent = `Bonne reponse : ${q.answers[q.correct]}`;
-
+ 
     $('answer-stats').innerHTML = counts.map((c, i) =>
       `<div class="stat-col${i === q.correct ? ' stat-correct' : ''}">
         <div class="stat-num">${c}</div>
@@ -268,7 +268,7 @@
         ${i === q.correct ? '<div class="stat-ok">correct</div>' : ''}
       </div>`
     ).join('');
-
+ 
     const pSnap = await get(ref(db, `games/${gamePin}/players`));
     const players = pSnap.val() || {};
     for (const [pid, ans] of Object.entries(answers)) {
@@ -277,10 +277,10 @@
         await update(ref(db, `games/${gamePin}/players/${pid}`), { score: (players[pid].score || 0) + pts });
       }
     }
-
+ 
     const updSnap = await get(ref(db, `games/${gamePin}/players`));
     renderLeaderboard(Object.values(updSnap.val() || {}));
-
+ 
     $('reveal-btn').style.display = 'none';
     $('next-q-btn').style.display = 'inline-flex';
     $('next-q-btn').textContent = currentQ + 1 < QUESTIONS.length ? 'Question suivante' : 'Voir le podium';
@@ -288,14 +288,14 @@
     const correctCount = counts[q.correct] || 0;
     const wrongCount = total - correctCount;
     setTimeout(() => playAudio(correctCount >= wrongCount ? 'correct' : 'wrong'), 200);
-
+ 
     if (currentQ >= 0 && currentQ < EXPLANATIONS.length) {
       const expl = $('host-explanation');
       expl.textContent = EXPLANATIONS[currentQ];
       expl.style.display = 'block';
     }
   }
-
+ 
   function renderLeaderboard(players) {
     const sorted = players.sort((a,b) => (b.score||0)-(a.score||0)).slice(0,8);
     $('leaderboard').innerHTML = sorted.length === 0
@@ -309,9 +309,9 @@
           </div>`
         ).join('');
   }
-
+ 
   window.goNextQ = async function() { stopAudio(); await nextQuestion(); };
-
+ 
   async function endGame() {
     clearInterval(timerInterval);
     await update(ref(db, `games/${gamePin}`), { phase: 'podium' });
@@ -322,7 +322,7 @@
     launchConfetti();
     playAudio('podium', false);
   }
-
+ 
   function renderPodium(players) {
     const rankLabels = ['1er','2eme','3eme'];
     const heights = [130, 95, 70];
@@ -334,7 +334,7 @@
         <div class="pod-bar" style="height:${heights[i]}px">${rankLabels[i]}</div>
       </div>`
     ).join('');
-
+ 
     $('podium-list').innerHTML = players.map((p,i) =>
       `<div class="pod-row ${i===0?'pod-top':''}">
         ${avatarHtml(p, 30)}
@@ -344,7 +344,7 @@
       </div>`
     ).join('');
   }
-
+ 
   function launchConfetti() {
     const canvas = $('confetti-canvas');
     const ctx = canvas.getContext('2d');
@@ -371,7 +371,7 @@
       else canvas.style.display='none';
     })();
   }
-
+ 
   window.resetGame = async function() {
     if (gamePin) await remove(ref(db, `games/${gamePin}`));
     location.reload();
@@ -396,7 +396,7 @@ body {
 .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1060px; gap: 16px; }
 .screen.anim-in { animation: fadeUp 0.38s cubic-bezier(0.16,1,0.3,1); }
 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-
+ 
 /* SETUP */
 #screen-setup { max-width: 460px; }
 .card { background: var(--card); border-radius: 20px; border: 1px solid var(--border); }
@@ -406,7 +406,7 @@ body {
 .tagline { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 28px; }
 .setup-card h2 { font-family: 'Montserrat', sans-serif; font-size: 1.2rem; margin-bottom: 10px; }
 .setup-card p { color: var(--muted); font-size: 0.88rem; line-height: 1.7; margin-bottom: 28px; }
-
+ 
 /* BUTTONS */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; border-radius: 50px; border: none; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.18s; letter-spacing: 0.3px; white-space: nowrap; }
 .btn-blue { background: var(--blue); color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,0.3); }
@@ -417,7 +417,7 @@ body {
 .btn-gold:hover { background: #d97706; transform: translateY(-2px); }
 .btn-ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
 .btn-ghost:hover { border-color: var(--red); color: var(--red); }
-
+ 
 /* LOBBY */
 .lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; }
 .pin-box { padding: 28px 22px; text-align: center; border-color: rgba(245,158,11,0.25); box-shadow: 0 0 40px rgba(245,158,11,0.06); }
@@ -428,7 +428,7 @@ body {
 .player-count-big { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--green); margin-bottom: 10px; }
 .player-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 140px; overflow-y: auto; }
 .player-chip { display: flex; align-items: center; gap: 7px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.22); padding: 4px 10px 4px 4px; border-radius: 20px; font-size: 0.78rem; color: #86efac; font-weight: 700; }
-
+ 
 /* GAME HEADER */
 .game-header { display: flex; align-items: center; gap: 14px; width: 100%; }
 .timer-wrap { width: 62px; height: 62px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -440,23 +440,23 @@ body {
 .prog-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--gold)); border-radius: 6px; transition: width 0.5s; }
 .ans-counter { font-size: 0.74rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
 .ans-counter strong { color: var(--green); font-family: 'Montserrat', sans-serif; }
-
+ 
 /* QUESTION */
 .question-box { background: var(--card); border-radius: var(--r); padding: 22px 26px; width: 100%; font-size: 1.22rem; font-weight: 700; line-height: 1.55; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 24px rgba(0,0,0,0.25); }
 .question-box.q-pop { animation: qPop 0.42s cubic-bezier(0.34,1.56,0.64,1); }
 @keyframes qPop { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
-
+ 
 /* ANSWERS */
 .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
 .host-ans { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1.5px solid; font-weight: 600; font-size: 0.88rem; transition: all 0.35s; }
 .host-ans.ans-correct { background: rgba(34,197,94,0.18) !important; border-color: var(--green) !important; }
 .host-ans.ans-wrong { opacity: 0.28; }
 .ans-label { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.88rem; color: #fff; }
-
+ 
 /* CORRECT BANNER */
 .correct-banner { display: none; align-items: center; gap: 12px; background: rgba(34,197,94,0.1); border: 1.5px solid rgba(34,197,94,0.3); border-radius: 12px; padding: 12px 18px; width: 100%; font-weight: 700; color: #86efac; font-size: 0.92rem; }
 .correct-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
-
+ 
 /* PANELS */
 .game-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
 .panel { background: var(--card); border-radius: var(--r); padding: 16px 18px; border: 1px solid var(--border); }
@@ -469,7 +469,7 @@ body {
 .lb-rank { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.72rem; color: var(--muted); width: 34px; }
 .lb-name { flex: 1; font-weight: 700; }
 .lb-score { font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--gold); font-size: 0.85rem; }
-
+ 
 #answer-stats { display: flex; gap: 8px; align-items: flex-end; height: 108px; }
 .stat-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
 .stat-num { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.82rem; }
@@ -479,7 +479,7 @@ body {
 .stat-ok { font-size: 0.6rem; color: var(--green); font-weight: 700; }
 .stat-correct .stat-bar-fill { box-shadow: 0 0 14px rgba(34,197,94,0.5); }
 .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-
+ 
 .host-explanation {
   display: none; width: 100%;
   background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.22);
@@ -488,7 +488,7 @@ body {
   animation: fadeUp 0.4s ease;
 }
 .host-explanation::before { content: 'Explication — '; font-weight: 800; color: #f59e0b; }
-
+ 
 /* PODIUM */
 #screen-podium { max-width: 680px; }
 .podium-header { text-align: center; width: 100%; }
@@ -505,20 +505,20 @@ body {
 .podium-block.rank1 .pod-bar { background: linear-gradient(180deg, rgba(245,158,11,0.5), rgba(245,158,11,0.12)); border: 2px solid rgba(245,158,11,0.45); color: var(--gold); }
 .podium-block.rank2 .pod-bar { background: linear-gradient(180deg, rgba(148,163,184,0.3), rgba(148,163,184,0.06)); border: 2px solid rgba(148,163,184,0.3); color: #94a3b8; }
 .podium-block.rank3 .pod-bar { background: linear-gradient(180deg, rgba(180,120,60,0.3), rgba(180,120,60,0.06)); border: 2px solid rgba(180,120,60,0.3); color: #b4783c; }
-
+ 
 .podium-table { background: var(--card); border-radius: var(--r); padding: 18px; width: 100%; border: 1px solid var(--border); }
 .pod-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; margin-bottom: 5px; background: rgba(255,255,255,0.03); font-size: 0.88rem; }
 .pod-top { background: rgba(245,158,11,0.09); border: 1px solid rgba(245,158,11,0.18); }
 .pod-rank-lbl { font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--muted); font-size: 0.75rem; width: 34px; }
 .pod-row-name { flex: 1; font-weight: 700; }
 .pod-row-score { font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--gold); }
-
+ 
 #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 9999; display: none; }
 </style>
 </head>
 <body>
 <canvas id="confetti-canvas"></canvas>
-
+ 
 <!-- SETUP -->
 <div class="screen" id="screen-setup" style="display:flex">
   <div class="card setup-card">
@@ -526,10 +526,18 @@ body {
     <div class="tagline">Tableau de bord Hote · Theme 1</div>
     <h2>Lancer une partie</h2>
     <p>Cree la salle de jeu. Un code PIN est genere automatiquement. Les joueurs le saisissent sur player.html pour rejoindre avec leur avatar.</p>
+    <div id="sound-btn" style="margin-bottom:16px">
+      <button class="btn" style="background:rgba(245,158,11,0.15);border:1.5px solid rgba(245,158,11,0.4);color:#f59e0b;width:100%" onclick="unlockAudio()">
+        Activer le son
+      </button>
+    </div>
+    <div id="sound-on" style="display:none;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;color:#22c55e;font-size:0.82rem;font-weight:700">
+      Son active
+    </div>
     <button class="btn btn-blue" onclick="createGame()">Creer la salle</button>
   </div>
 </div>
-
+ 
 <!-- LOBBY -->
 <div class="screen" id="screen-lobby">
   <div class="lobby-grid">
@@ -546,7 +554,7 @@ body {
   </div>
   <button class="btn btn-green" onclick="startGame()">Lancer la partie</button>
 </div>
-
+ 
 <!-- GAME -->
 <div class="screen" id="screen-game">
   <div class="game-header">
@@ -583,7 +591,7 @@ body {
     <button class="btn btn-ghost" onclick="resetGame()">Terminer la partie</button>
   </div>
 </div>
-
+ 
 <!-- PODIUM -->
 <div class="screen" id="screen-podium">
   <div class="podium-header">
@@ -597,6 +605,7 @@ body {
   </div>
   <button class="btn btn-blue" onclick="resetGame()">Nouvelle partie</button>
 </div>
-
+ 
 </body>
 </html>
+ 
