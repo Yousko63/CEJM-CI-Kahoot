@@ -568,4 +568,35 @@ body {
   </div>
   <div class="host-explanation" id="host-explanation"></div>
   <div class="game-bottom">
-    
+    <div class="panel">
+      <div class="panel-title">Classement en direct</div>
+      <div id="leaderboard"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Repartition des reponses</div>
+      <div id="answer-stats"></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-gold" id="reveal-btn" onclick="revealNow()" style="display:none">Reveler maintenant</button>
+    <button class="btn btn-green" id="next-q-btn" onclick="goNextQ()" style="display:none">Question suivante</button>
+    <button class="btn btn-ghost" onclick="resetGame()">Terminer la partie</button>
+  </div>
+</div>
+
+<!-- PODIUM -->
+<div class="screen" id="screen-podium">
+  <div class="podium-header">
+    <h2>Podium Final</h2>
+    <p>CEJM - Theme 1 : Integration de l'entreprise dans son environnement</p>
+  </div>
+  <div class="podium-visual" id="podium-visual"></div>
+  <div class="podium-table">
+    <div class="panel-title">Classement complet</div>
+    <div id="podium-list"></div>
+  </div>
+  <button class="btn btn-blue" onclick="resetGame()">Nouvelle partie</button>
+</div>
+
+</body>
+</html>
